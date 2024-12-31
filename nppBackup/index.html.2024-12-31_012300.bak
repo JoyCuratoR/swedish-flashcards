@@ -146,6 +146,10 @@
                 <input type="text" id="visual">
             </div>
             <div class="form-group">
+                <label for="cardImageInput">Card Image:</label>
+                <input type="file" id="cardImageInput" accept="image/*">
+            </div>
+            <div class="form-group">
                 <label for="sentence">Example Sentence:</label>
                 <textarea id="sentence"></textarea>
             </div>
@@ -153,7 +157,7 @@
                 <label for="translation">Sentence Translation:</label>
                 <textarea id="translation"></textarea>
             </div>
-            <button onclick="addCard()">Add Card</button>
+            <button id="addCardButton">Add Card</button>
         </div>
     </div>
 
@@ -165,34 +169,94 @@
                 this.fileHandle = null;
                 this.hasUnsavedChanges = false;
                 
-                // Load saved state from localStorage
                 const savedState = localStorage.getItem('flashcardState');
                 if (savedState) {
-                    const state = JSON.parse(savedState);
-                    this.cards = state.cards;
+                    try {
+                        const state = JSON.parse(savedState);
+                        this.cards = state.cards;
+                    } catch (e) {
+                        console.error('Error loading saved state:', e);
+                    }
                 }
             }
 
             saveState() {
-                // Save state to localStorage
-                localStorage.setItem('flashcardState', JSON.stringify({
-                    cards: this.cards
-                }));
+                try {
+                    localStorage.setItem('flashcardState', JSON.stringify({
+                        cards: this.cards
+                    }));
+                } catch (e) {
+                    console.error('Error saving state:', e);
+                }
             }
 
-            addCard(card) {
-                const newCard = {
-                    id: Date.now().toString(),
-                    ...card,
-                    nextReview: new Date().toISOString(),
-                    interval: 1,
-                    reviewCount: 0
-                };
-                this.cards.push(newCard);
-                this.hasUnsavedChanges = true;
-                document.getElementById('saveButton').disabled = false;
-            }
+            async addCard(card) {
+                try {
+                    // Create the new card object first
+                    const newCard = {
+                        id: Date.now().toString(),
+                        ...card,
+                        nextReview: new Date().toISOString(),
+                        interval: 1,
+                        reviewCount: 0
+                    };
+					
+					// Handle image conversion separately
+                    if (card.imageFile) {
+                        try {
+                            newCard.imageData = await this.imageToBase64(card.imageFile);
+                        } catch (e) {
+                            console.error('Error converting image:', e);
+                            alert('Error processing image. Card will be added without image.');
+                        }
+                    }
+					
+                // Remove the File object
+                    delete newCard.imageFile;
+                    
+                    // Add the card and update state
+                    this.cards.push(newCard);
+                    this.hasUnsavedChanges = true;
+                    this.saveState();
+                    document.getElementById('saveButton').disabled = false;
+                    return true; // Indicate success
+                } catch (e) {
+                    console.error('Error adding card:', e);
+                    alert('Error adding card. Please try again.');
+                    return false;
+                }
 
+            imageToBase64(file) {
+                return new Promise((resolve, reject) => {
+                    if (!file) {
+                        resolve(null);
+                        return;
+                    }
+
+                    if (file.size > 5000000) { // 5MB limit
+                        reject(new Error('Image file is too large (max 5MB)'));
+                        return;
+                    }
+			const reader = new FileReader();
+                    
+                    reader.onload = () => {
+                        resolve(reader.result);
+                    };
+					
+			reader.onerror = (error) => {
+                        console.error('FileReader error:', error);
+                        reject(new Error('Error reading image file'));
+                    };
+
+                    try {
+                        reader.readAsDataURL(file);
+                    } catch (e) {
+                        console.error('Error starting file read:', e);
+                        reject(e);
+                    }
+                });
+            }
+			
             getDueCards() {
                 const now = new Date();
                 return this.cards.filter(card => new Date(card.nextReview) <= now);
@@ -369,49 +433,65 @@
             updateUI();
         }
 
-        async function addCard() {
-            const swedish = document.getElementById('swedish').value;
-            const english = document.getElementById('english').value;
-            const visual = document.getElementById('visual').value;
-            const sentence = document.getElementById('sentence').value;
-            const translation = document.getElementById('translation').value;
-            const imageFile = document.getElementById('cardImageInput').files[0];
+        // Initialize event listeners after DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            const addCardButton = document.getElementById('addCardButton');
+            addCardButton.addEventListener('click', async () => {
+                try {
+                    const swedish = document.getElementById('swedish').value.trim();
+                    const english = document.getElementById('english').value.trim();
+                    const visual = document.getElementById('visual').value.trim();
+                    const sentence = document.getElementById('sentence').value.trim();
+                    const translation = document.getElementById('translation').value.trim();
+                    const imageInput = document.getElementById('cardImageInput');
+                    const imageFile = imageInput.files.length > 0 ? imageInput.files[0] : null;
 
-            if (!swedish || !english) {
-                alert('Swedish and English fields are required!');
-                return;
-            }
+                    if (!swedish || !english) {
+                        alert('Swedish and English fields are required!');
+                        return;
+                    }
+		// Show loading state
+                    addCardButton.textContent = 'Adding...';
+                    addCardButton.disabled = true;
 
-            await system.addCard({
-                swedish,
-                english,
-                visual,
-                sentence,
-                translation,
-                imageFile
+                    const success = await system.addCard({
+                        swedish,
+                        english,
+                        visual,
+                        sentence,
+                        translation,
+                        imageFile
+                    });
+
+                    if (success) {
+                        // Clear form
+                        document.getElementById('swedish').value = '';
+                        document.getElementById('english').value = '';
+                        document.getElementById('visual').value = '';
+                        document.getElementById('sentence').value = '';
+                        document.getElementById('translation').value = '';
+                        document.getElementById('cardImageInput').value = '';
+
+                        updateUI();
+                    }
+
+                // Restore button state
+                    addCardButton.textContent = 'Add Card';
+                    addCardButton.disabled = false;
+
+                } catch (e) {
+                    console.error('Error in addCard:', e);
+                    alert('Error adding card. Please try again.');
+                    // Ensure button is restored even if there's an error
+                    addCardButton.textContent = 'Add Card';
+                    addCardButton.disabled = false;
+                }
             });
 
-            // Clear form
-            document.getElementById('swedish').value = '';
-            document.getElementById('english').value = '';
-            document.getElementById('visual').value = '';
-            document.getElementById('sentence').value = '';
-            document.getElementById('translation').value = '';
-            document.getElementById('cardImageInput').value = '';
-
+            // Initialize the UI
             updateUI();
-        }
-
-        // Handle beforeunload to warn about unsaved changes
-        window.addEventListener('beforeunload', (e) => {
-            if (system.hasUnsavedChanges) {
-                e.preventDefault();
-                e.returnValue = '';
-            }
         });
 
-        // Initialize the UI
-        updateUI();
     </script>
 </body>
 </html>
