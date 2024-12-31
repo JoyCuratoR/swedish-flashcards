@@ -157,7 +157,7 @@
                 <label for="translation">Sentence Translation:</label>
                 <textarea id="translation"></textarea>
             </div>
-            <button id="addCardButton">Add Card</button>
+            <button onclick="addCard()">Add Card</button>
         </div>
     </div>
 
@@ -433,65 +433,66 @@
             updateUI();
         }
 
-        // Initialize event listeners after DOM is loaded
-        document.addEventListener('DOMContentLoaded', () => {
-            const addCardButton = document.getElementById('addCardButton');
-            addCardButton.addEventListener('click', async () => {
-                try {
-                    const swedish = document.getElementById('swedish').value.trim();
-                    const english = document.getElementById('english').value.trim();
-                    const visual = document.getElementById('visual').value.trim();
-                    const sentence = document.getElementById('sentence').value.trim();
-                    const translation = document.getElementById('translation').value.trim();
-                    const imageInput = document.getElementById('cardImageInput');
-                    const imageFile = imageInput.files.length > 0 ? imageInput.files[0] : null;
+        async function addCard() {
+            try {
+                const swedish = document.getElementById('swedish').value.trim();
+                const english = document.getElementById('english').value.trim();
+                const visual = document.getElementById('visual').value.trim();
+                const sentence = document.getElementById('sentence').value.trim();
+                const translation = document.getElementById('translation').value.trim();
+                const imageInput = document.getElementById('cardImageInput');
+                const imageFile = imageInput.files.length > 0 ? imageInput.files[0] : null;
 
-                    if (!swedish || !english) {
-                        alert('Swedish and English fields are required!');
-                        return;
-                    }
-		// Show loading state
-                    addCardButton.textContent = 'Adding...';
-                    addCardButton.disabled = true;
+                if (!swedish || !english) {
+                    alert('Swedish and English fields are required!');
+                    return;
+                }
+		const addButton = event.target;
+                const originalText = addButton.textContent;
+                addButton.textContent = 'Adding...';
+                addButton.disabled = true;
 
-                    const success = await system.addCard({
-                        swedish,
-                        english,
-                        visual,
-                        sentence,
-                        translation,
-                        imageFile
-                    });
+                const success = await system.addCard({
+                    swedish,
+                    english,
+                    visual,
+                    sentence,
+                    translation,
+                    imageFile
+                });
 
-                    if (success) {
-                        // Clear form
-                        document.getElementById('swedish').value = '';
-                        document.getElementById('english').value = '';
-                        document.getElementById('visual').value = '';
-                        document.getElementById('sentence').value = '';
-                        document.getElementById('translation').value = '';
-                        document.getElementById('cardImageInput').value = '';
+                if (success) {
+                    // Clear form
+                    document.getElementById('swedish').value = '';
+                    document.getElementById('english').value = '';
+                    document.getElementById('visual').value = '';
+                    document.getElementById('sentence').value = '';
+                    document.getElementById('translation').value = '';
+                    document.getElementById('cardImageInput').value = '';
 
-                        updateUI();
-                    }
+                    updateUI();
+                }
 
                 // Restore button state
-                    addCardButton.textContent = 'Add Card';
-                    addCardButton.disabled = false;
+                addButton.textContent = originalText;
+                addButton.disabled = false;
 
-                } catch (e) {
-                    console.error('Error in addCard:', e);
-                    alert('Error adding card. Please try again.');
-                    // Ensure button is restored even if there's an error
-                    addCardButton.textContent = 'Add Card';
-                    addCardButton.disabled = false;
-                }
-            });
+            } catch (e) {
+                console.error('Error in addCard:', e);
+                alert('Error adding card. Please try again.');
+            }
+        }
 
-            // Initialize the UI
-            updateUI();
+        // Handle beforeunload to warn about unsaved changes
+        window.addEventListener('beforeunload', (e) => {
+            if (system.hasUnsavedChanges) {
+                e.preventDefault();
+                e.returnValue = '';
+            }
         });
 
+        // Initialize the UI
+        updateUI();
     </script>
 </body>
 </html>
