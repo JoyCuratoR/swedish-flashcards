@@ -31,6 +31,12 @@
             text-align: center;
         }
 
+        .card-image {
+            max-width: 300px;
+            max-height: 200px;
+            margin: 10px 0;
+        }
+
         .controls {
             display: flex;
             justify-content: center;
@@ -84,6 +90,10 @@
             margin: 10px 0;
             text-align: center;
         }
+
+        .hidden {
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -101,16 +111,24 @@
         <div id="fileHandle">No file selected</div>
 
         <div id="flashcardContainer" class="card flashcard">
-            <h3 id="cardFront"></h3>
-            <p id="cardBack" style="display: none;"></p>
+            <div id="cardFront">
+                <h3 id="swedishWord"></h3>
+                <p id="swedishSentence"></p>
+                <p id="visualDesc"></p>
+                <img id="cardImage" class="card-image hidden" alt="Card image">
+            </div>
+            <div id="cardBack" class="hidden">
+                <p id="englishWord"></p>
+                <p id="sentenceTranslation"></p>
+            </div>
         </div>
 
         <div class="controls">
             <button onclick="showAnswer()">Show Answer</button>
-            <button onclick="rateCard(1)" style="display: none;">Again</button>
-            <button onclick="rateCard(2)" style="display: none;">Hard</button>
-            <button onclick="rateCard(3)" style="display: none;">Good</button>
-            <button onclick="rateCard(4)" style="display: none;">Easy</button>
+            <button onclick="rateCard(1)" class="hidden">Again</button>
+            <button onclick="rateCard(2)" class="hidden">Hard</button>
+            <button onclick="rateCard(3)" class="hidden">Good</button>
+            <button onclick="rateCard(4)" class="hidden">Easy</button>
         </div>
 
         <div class="card">
@@ -146,6 +164,20 @@
                 this.currentCard = null;
                 this.fileHandle = null;
                 this.hasUnsavedChanges = false;
+                
+                // Load saved state from localStorage
+                const savedState = localStorage.getItem('flashcardState');
+                if (savedState) {
+                    const state = JSON.parse(savedState);
+                    this.cards = state.cards;
+                }
+            }
+
+            saveState() {
+                // Save state to localStorage
+                localStorage.setItem('flashcardState', JSON.stringify({
+                    cards: this.cards
+                }));
             }
 
             addCard(card) {
@@ -186,6 +218,7 @@
                 card.reviewCount++;
 
                 this.hasUnsavedChanges = true;
+                this.saveState();
                 document.getElementById('saveButton').disabled = false;
             }
         }
@@ -196,7 +229,6 @@
         // File System Functions
         async function openFile() {
             try {
-                // Show file picker
                 const [fileHandle] = await window.showOpenFilePicker({
                     types: [{
                         description: 'Flashcards JSON File',
@@ -208,28 +240,17 @@
                 document.getElementById('fileHandle').textContent = 
                     `Current file: ${fileHandle.name}`;
                 
-                // Read file contents
                 const file = await fileHandle.getFile();
                 const contents = await file.text();
                 system.cards = JSON.parse(contents);
+                system.saveState();
                 
                 document.getElementById('saveButton').disabled = false;
                 updateUI();
             } catch (err) {
                 if (err.name !== 'AbortError') {
                     console.error('Error opening file:', err);
-                    alert('Error opening file. Falling back to file input...');
-                    // Fallback for browsers without File System Access API
-                    const input = document.createElement('input');
-                    input.type = 'file';
-                    input.accept = '.json';
-                    input.onchange = async (e) => {
-                        const file = e.target.files[0];
-                        const contents = await file.text();
-                        system.cards = JSON.parse(contents);
-                        updateUI();
-                    };
-                    input.click();
+                    alert('Error opening file');
                 }
             }
         }
@@ -246,6 +267,7 @@
                 
                 system.fileHandle = fileHandle;
                 system.cards = [];
+                system.saveState();
                 document.getElementById('fileHandle').textContent = 
                     `Current file: ${fileHandle.name}`;
                 document.getElementById('saveButton').disabled = false;
@@ -255,15 +277,7 @@
             } catch (err) {
                 if (err.name !== 'AbortError') {
                     console.error('Error creating file:', err);
-                    alert('Error creating file. Falling back to file download...');
-                    // Fallback for browsers without File System Access API
-                    const blob = new Blob(['[]'], { type: 'application/json' });
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = 'flashcards.json';
-                    a.click();
-                    URL.revokeObjectURL(url);
+                    alert('Error creating file');
                 }
             }
         }
@@ -283,15 +297,7 @@
                 document.getElementById('saveButton').disabled = true;
             } catch (err) {
                 console.error('Error saving file:', err);
-                // Fallback to download
-                const blob = new Blob([JSON.stringify(system.cards, null, 2)], 
-                    { type: 'application/json' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = 'flashcards.json';
-                a.click();
-                URL.revokeObjectURL(url);
+                alert('Error saving file');
             }
         }
 
@@ -304,14 +310,16 @@
                 system.currentCard = dueCards[Math.floor(Math.random() * dueCards.length)];
                 showCard();
             } else {
-                document.getElementById('cardFront').textContent = "No cards due for review!";
-                document.getElementById('cardBack').textContent = "";
-                document.getElementById('cardBack').style.display = "none";
+                document.getElementById('swedishWord').textContent = "No cards due for review!";
+                document.getElementById('swedishSentence').textContent = "";
+                document.getElementById('visualDesc').textContent = "";
+                document.getElementById('cardImage').classList.add('hidden');
+                document.getElementById('cardBack').classList.add('hidden');
                 hideAnswerButtons();
             }
         }
 
-       function showCard() {
+        function showCard() {
             const card = system.currentCard;
             
             // Front of card
@@ -340,7 +348,7 @@
         }
 
         function showAnswer() {
-            document.getElementById('cardBack').style.display = "block";
+            document.getElementById('cardBack').classList.remove('hidden');
             document.querySelector('button[onclick="showAnswer()"]').style.display = "none";
             showAnswerButtons();
             isShowingAnswer = true;
@@ -348,12 +356,12 @@
 
         function hideAnswerButtons() {
             const buttons = document.querySelectorAll('button[onclick^="rateCard"]');
-            buttons.forEach(button => button.style.display = "none");
+            buttons.forEach(button => button.classList.add('hidden'));
         }
 
         function showAnswerButtons() {
             const buttons = document.querySelectorAll('button[onclick^="rateCard"]');
-            buttons.forEach(button => button.style.display = "block");
+            buttons.forEach(button => button.classList.remove('hidden'));
         }
 
         function rateCard(rating) {
@@ -361,24 +369,26 @@
             updateUI();
         }
 
-        function addCard() {
+        async function addCard() {
             const swedish = document.getElementById('swedish').value;
             const english = document.getElementById('english').value;
             const visual = document.getElementById('visual').value;
             const sentence = document.getElementById('sentence').value;
             const translation = document.getElementById('translation').value;
+            const imageFile = document.getElementById('cardImageInput').files[0];
 
             if (!swedish || !english) {
                 alert('Swedish and English fields are required!');
                 return;
             }
 
-            system.addCard({
+            await system.addCard({
                 swedish,
                 english,
                 visual,
                 sentence,
-                translation
+                translation,
+                imageFile
             });
 
             // Clear form
@@ -387,6 +397,7 @@
             document.getElementById('visual').value = '';
             document.getElementById('sentence').value = '';
             document.getElementById('translation').value = '';
+            document.getElementById('cardImageInput').value = '';
 
             updateUI();
         }
