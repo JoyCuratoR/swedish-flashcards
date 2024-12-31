@@ -84,10 +84,6 @@
             margin: 10px 0;
             text-align: center;
         }
-
-        .card-section {
-            margin: 10px 0;
-        }
     </style>
 </head>
 <body>
@@ -105,15 +101,8 @@
         <div id="fileHandle">No file selected</div>
 
         <div id="flashcardContainer" class="card flashcard">
-            <div id="cardFront">
-                <div class="card-section" id="swedishWord"></div>
-                <div class="card-section" id="visualDesc"></div>
-                <div class="card-section" id="swedishSentence"></div>
-            </div>
-            <div id="cardBack" style="display: none;">
-                <div class="card-section" id="englishWord"></div>
-                <div class="card-section" id="englishSentence"></div>
-            </div>
+            <h3 id="cardFront"></h3>
+            <p id="cardBack" style="display: none;"></p>
         </div>
 
         <div class="controls">
@@ -157,22 +146,6 @@
                 this.currentCard = null;
                 this.fileHandle = null;
                 this.hasUnsavedChanges = false;
-                this.loadFromLocalStorage();
-            }
-
-            loadFromLocalStorage() {
-                const savedState = localStorage.getItem('flashcardState');
-                if (savedState) {
-                    const state = JSON.parse(savedState);
-                    this.cards = state.cards || [];
-                }
-            }
-
-            saveToLocalStorage() {
-                const state = {
-                    cards: this.cards
-                };
-                localStorage.setItem('flashcardState', JSON.stringify(state));
             }
 
             addCard(card) {
@@ -185,7 +158,6 @@
                 };
                 this.cards.push(newCard);
                 this.hasUnsavedChanges = true;
-                this.saveToLocalStorage();
                 document.getElementById('saveButton').disabled = false;
             }
 
@@ -214,7 +186,6 @@
                 card.reviewCount++;
 
                 this.hasUnsavedChanges = true;
-                this.saveToLocalStorage();
                 document.getElementById('saveButton').disabled = false;
             }
         }
@@ -222,8 +193,10 @@
         const system = new FlashcardSystem();
         let isShowingAnswer = false;
 
+        // File System Functions
         async function openFile() {
             try {
+                // Show file picker
                 const [fileHandle] = await window.showOpenFilePicker({
                     types: [{
                         description: 'Flashcards JSON File',
@@ -235,26 +208,28 @@
                 document.getElementById('fileHandle').textContent = 
                     `Current file: ${fileHandle.name}`;
                 
+                // Read file contents
                 const file = await fileHandle.getFile();
                 const contents = await file.text();
-                const loadedCards = JSON.parse(contents);
-                
-                // Merge loaded cards with existing review metadata
-                system.cards = system.cards.map(existingCard => {
-                    const loadedCard = loadedCards.find(c => c.id === existingCard.id);
-                    return loadedCard ? { ...loadedCard, 
-                        nextReview: existingCard.nextReview,
-                        interval: existingCard.interval,
-                        reviewCount: existingCard.reviewCount
-                    } : existingCard;
-                });
+                system.cards = JSON.parse(contents);
                 
                 document.getElementById('saveButton').disabled = false;
                 updateUI();
             } catch (err) {
                 if (err.name !== 'AbortError') {
                     console.error('Error opening file:', err);
-                    alert('Error opening file');
+                    alert('Error opening file. Falling back to file input...');
+                    // Fallback for browsers without File System Access API
+                    const input = document.createElement('input');
+                    input.type = 'file';
+                    input.accept = '.json';
+                    input.onchange = async (e) => {
+                        const file = e.target.files[0];
+                        const contents = await file.text();
+                        system.cards = JSON.parse(contents);
+                        updateUI();
+                    };
+                    input.click();
                 }
             }
         }
@@ -280,7 +255,15 @@
             } catch (err) {
                 if (err.name !== 'AbortError') {
                     console.error('Error creating file:', err);
-                    alert('Error creating file');
+                    alert('Error creating file. Falling back to file download...');
+                    // Fallback for browsers without File System Access API
+                    const blob = new Blob(['[]'], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'flashcards.json';
+                    a.click();
+                    URL.revokeObjectURL(url);
                 }
             }
         }
@@ -300,10 +283,19 @@
                 document.getElementById('saveButton').disabled = true;
             } catch (err) {
                 console.error('Error saving file:', err);
-                alert('Error saving file');
+                // Fallback to download
+                const blob = new Blob([JSON.stringify(system.cards, null, 2)], 
+                    { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'flashcards.json';
+                a.click();
+                URL.revokeObjectURL(url);
             }
         }
 
+        // UI Functions
         function updateUI() {
             const dueCards = system.getDueCards();
             document.getElementById('dueCount').textContent = dueCards.length;
@@ -312,27 +304,36 @@
                 system.currentCard = dueCards[Math.floor(Math.random() * dueCards.length)];
                 showCard();
             } else {
-                document.getElementById('swedishWord').textContent = "No cards due for review!";
-                document.getElementById('visualDesc').textContent = "";
-                document.getElementById('swedishSentence').textContent = "";
+                document.getElementById('cardFront').textContent = "No cards due for review!";
+                document.getElementById('cardBack').textContent = "";
                 document.getElementById('cardBack').style.display = "none";
                 hideAnswerButtons();
             }
         }
 
-        function showCard() {
+       function showCard() {
             const card = system.currentCard;
             
             // Front of card
-            document.getElementById('swedishWord').textContent = `Swedish: ${card.swedish}`;
-            document.getElementById('visualDesc').textContent = card.visual ? `Visual: ${card.visual}` : '';
-            document.getElementById('swedishSentence').textContent = card.sentence ? `Sentence: ${card.sentence}` : '';
+            document.getElementById('swedishWord').textContent = card.swedish;
+            document.getElementById('swedishSentence').textContent = card.sentence || '';
+            document.getElementById('visualDesc').textContent = card.visual || '';
+            
+            // Handle image
+            const cardImage = document.getElementById('cardImage');
+            if (card.imageData) {
+                cardImage.src = card.imageData;
+                cardImage.classList.remove('hidden');
+            } else {
+                cardImage.classList.add('hidden');
+            }
             
             // Back of card
             document.getElementById('englishWord').textContent = `English: ${card.english}`;
-            document.getElementById('englishSentence').textContent = card.translation ? `Translation: ${card.translation}` : '';
+            document.getElementById('sentenceTranslation').textContent = 
+                card.translation ? `Translation: ${card.translation}` : '';
             
-            document.getElementById('cardBack').style.display = "none";
+            document.getElementById('cardBack').classList.add('hidden');
             document.querySelector('button[onclick="showAnswer()"]').style.display = "block";
             hideAnswerButtons();
             isShowingAnswer = false;
@@ -390,6 +391,7 @@
             updateUI();
         }
 
+        // Handle beforeunload to warn about unsaved changes
         window.addEventListener('beforeunload', (e) => {
             if (system.hasUnsavedChanges) {
                 e.preventDefault();
@@ -397,6 +399,7 @@
             }
         });
 
+        // Initialize the UI
         updateUI();
     </script>
 </body>
