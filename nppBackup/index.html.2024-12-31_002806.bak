@@ -31,12 +31,6 @@
             text-align: center;
         }
 
-        .card-image {
-            max-width: 300px;
-            max-height: 200px;
-            margin: 10px 0;
-        }
-
         .controls {
             display: flex;
             justify-content: center;
@@ -90,10 +84,6 @@
             margin: 10px 0;
             text-align: center;
         }
-
-        .hidden {
-            display: none;
-        }
     </style>
 </head>
 <body>
@@ -111,24 +101,16 @@
         <div id="fileHandle">No file selected</div>
 
         <div id="flashcardContainer" class="card flashcard">
-            <div id="cardFront">
-                <h3 id="swedishWord"></h3>
-                <p id="swedishSentence"></p>
-                <p id="visualDesc"></p>
-                <img id="cardImage" class="card-image hidden" alt="Card image">
-            </div>
-            <div id="cardBack" class="hidden">
-                <p id="englishWord"></p>
-                <p id="sentenceTranslation"></p>
-            </div>
+            <h3 id="cardFront"></h3>
+            <p id="cardBack" style="display: none;"></p>
         </div>
 
         <div class="controls">
             <button onclick="showAnswer()">Show Answer</button>
-            <button onclick="rateCard(1)" class="hidden">Again</button>
-            <button onclick="rateCard(2)" class="hidden">Hard</button>
-            <button onclick="rateCard(3)" class="hidden">Good</button>
-            <button onclick="rateCard(4)" class="hidden">Easy</button>
+            <button onclick="rateCard(1)" style="display: none;">Again</button>
+            <button onclick="rateCard(2)" style="display: none;">Hard</button>
+            <button onclick="rateCard(3)" style="display: none;">Good</button>
+            <button onclick="rateCard(4)" style="display: none;">Easy</button>
         </div>
 
         <div class="card">
@@ -144,10 +126,6 @@
             <div class="form-group">
                 <label for="visual">Visual Description:</label>
                 <input type="text" id="visual">
-            </div>
-            <div class="form-group">
-                <label for="cardImageInput">Card Image:</label>
-                <input type="file" id="cardImageInput" accept="image/*">
             </div>
             <div class="form-group">
                 <label for="sentence">Example Sentence:</label>
@@ -168,28 +146,9 @@
                 this.currentCard = null;
                 this.fileHandle = null;
                 this.hasUnsavedChanges = false;
-                
-                // Load saved state from localStorage
-                const savedState = localStorage.getItem('flashcardState');
-                if (savedState) {
-                    const state = JSON.parse(savedState);
-                    this.cards = state.cards;
-                }
             }
 
-            saveState() {
-                // Save state to localStorage
-                localStorage.setItem('flashcardState', JSON.stringify({
-                    cards: this.cards
-                }));
-            }
-
-            async addCard(card) {
-                // Convert image to base64 if it exists
-                if (card.imageFile) {
-                    card.imageData = await this.imageToBase64(card.imageFile);
-                }
-
+            addCard(card) {
                 const newCard = {
                     id: Date.now().toString(),
                     ...card,
@@ -197,21 +156,9 @@
                     interval: 1,
                     reviewCount: 0
                 };
-                delete newCard.imageFile; // Remove the File object before saving
-                
                 this.cards.push(newCard);
                 this.hasUnsavedChanges = true;
-                this.saveState();
                 document.getElementById('saveButton').disabled = false;
-            }
-
-            async imageToBase64(file) {
-                return new Promise((resolve, reject) => {
-                    const reader = new FileReader();
-                    reader.onload = () => resolve(reader.result);
-                    reader.onerror = reject;
-                    reader.readAsDataURL(file);
-                });
             }
 
             getDueCards() {
@@ -239,7 +186,6 @@
                 card.reviewCount++;
 
                 this.hasUnsavedChanges = true;
-                this.saveState();
                 document.getElementById('saveButton').disabled = false;
             }
         }
@@ -250,6 +196,7 @@
         // File System Functions
         async function openFile() {
             try {
+                // Show file picker
                 const [fileHandle] = await window.showOpenFilePicker({
                     types: [{
                         description: 'Flashcards JSON File',
@@ -261,17 +208,28 @@
                 document.getElementById('fileHandle').textContent = 
                     `Current file: ${fileHandle.name}`;
                 
+                // Read file contents
                 const file = await fileHandle.getFile();
                 const contents = await file.text();
                 system.cards = JSON.parse(contents);
-                system.saveState();
                 
                 document.getElementById('saveButton').disabled = false;
                 updateUI();
             } catch (err) {
                 if (err.name !== 'AbortError') {
                     console.error('Error opening file:', err);
-                    alert('Error opening file');
+                    alert('Error opening file. Falling back to file input...');
+                    // Fallback for browsers without File System Access API
+                    const input = document.createElement('input');
+                    input.type = 'file';
+                    input.accept = '.json';
+                    input.onchange = async (e) => {
+                        const file = e.target.files[0];
+                        const contents = await file.text();
+                        system.cards = JSON.parse(contents);
+                        updateUI();
+                    };
+                    input.click();
                 }
             }
         }
@@ -288,7 +246,6 @@
                 
                 system.fileHandle = fileHandle;
                 system.cards = [];
-                system.saveState();
                 document.getElementById('fileHandle').textContent = 
                     `Current file: ${fileHandle.name}`;
                 document.getElementById('saveButton').disabled = false;
@@ -298,7 +255,15 @@
             } catch (err) {
                 if (err.name !== 'AbortError') {
                     console.error('Error creating file:', err);
-                    alert('Error creating file');
+                    alert('Error creating file. Falling back to file download...');
+                    // Fallback for browsers without File System Access API
+                    const blob = new Blob(['[]'], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'flashcards.json';
+                    a.click();
+                    URL.revokeObjectURL(url);
                 }
             }
         }
@@ -318,7 +283,15 @@
                 document.getElementById('saveButton').disabled = true;
             } catch (err) {
                 console.error('Error saving file:', err);
-                alert('Error saving file');
+                // Fallback to download
+                const blob = new Blob([JSON.stringify(system.cards, null, 2)], 
+                    { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'flashcards.json';
+                a.click();
+                URL.revokeObjectURL(url);
             }
         }
 
@@ -331,45 +304,30 @@
                 system.currentCard = dueCards[Math.floor(Math.random() * dueCards.length)];
                 showCard();
             } else {
-                document.getElementById('swedishWord').textContent = "No cards due for review!";
-                document.getElementById('swedishSentence').textContent = "";
-                document.getElementById('visualDesc').textContent = "";
-                document.getElementById('cardImage').classList.add('hidden');
-                document.getElementById('cardBack').classList.add('hidden');
+                document.getElementById('cardFront').textContent = "No cards due for review!";
+                document.getElementById('cardBack').textContent = "";
+                document.getElementById('cardBack').style.display = "none";
                 hideAnswerButtons();
             }
         }
 
         function showCard() {
             const card = system.currentCard;
-            
-            // Front of card
-            document.getElementById('swedishWord').textContent = card.swedish;
-            document.getElementById('swedishSentence').textContent = card.sentence || '';
-            document.getElementById('visualDesc').textContent = card.visual || '';
-            
-            // Handle image
-            const cardImage = document.getElementById('cardImage');
-            if (card.imageData) {
-                cardImage.src = card.imageData;
-                cardImage.classList.remove('hidden');
-            } else {
-                cardImage.classList.add('hidden');
-            }
-            
-            // Back of card
-            document.getElementById('englishWord').textContent = `English: ${card.english}`;
-            document.getElementById('sentenceTranslation').textContent = 
-                card.translation ? `Translation: ${card.translation}` : '';
-            
-            document.getElementById('cardBack').classList.add('hidden');
+            document.getElementById('cardFront').textContent = card.swedish;
+            document.getElementById('cardBack').innerHTML = `
+                English: ${card.english}<br>
+                Visual: ${card.visual || ''}<br>
+                ${card.sentence ? `Sentence: ${card.sentence}<br>` : ''}
+                ${card.translation ? `Translation: ${card.translation}` : ''}
+            `;
+            document.getElementById('cardBack').style.display = "none";
             document.querySelector('button[onclick="showAnswer()"]').style.display = "block";
             hideAnswerButtons();
             isShowingAnswer = false;
         }
 
         function showAnswer() {
-            document.getElementById('cardBack').classList.remove('hidden');
+            document.getElementById('cardBack').style.display = "block";
             document.querySelector('button[onclick="showAnswer()"]').style.display = "none";
             showAnswerButtons();
             isShowingAnswer = true;
@@ -377,12 +335,12 @@
 
         function hideAnswerButtons() {
             const buttons = document.querySelectorAll('button[onclick^="rateCard"]');
-            buttons.forEach(button => button.classList.add('hidden'));
+            buttons.forEach(button => button.style.display = "none");
         }
 
         function showAnswerButtons() {
             const buttons = document.querySelectorAll('button[onclick^="rateCard"]');
-            buttons.forEach(button => button.classList.remove('hidden'));
+            buttons.forEach(button => button.style.display = "block");
         }
 
         function rateCard(rating) {
@@ -390,26 +348,24 @@
             updateUI();
         }
 
-        async function addCard() {
+        function addCard() {
             const swedish = document.getElementById('swedish').value;
             const english = document.getElementById('english').value;
             const visual = document.getElementById('visual').value;
             const sentence = document.getElementById('sentence').value;
             const translation = document.getElementById('translation').value;
-            const imageFile = document.getElementById('cardImageInput').files[0];
 
             if (!swedish || !english) {
                 alert('Swedish and English fields are required!');
                 return;
             }
 
-            await system.addCard({
+            system.addCard({
                 swedish,
                 english,
                 visual,
                 sentence,
-                translation,
-                imageFile
+                translation
             });
 
             // Clear form
@@ -418,7 +374,6 @@
             document.getElementById('visual').value = '';
             document.getElementById('sentence').value = '';
             document.getElementById('translation').value = '';
-            document.getElementById('cardImageInput').value = '';
 
             updateUI();
         }
