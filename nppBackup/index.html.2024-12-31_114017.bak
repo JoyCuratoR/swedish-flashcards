@@ -217,41 +217,7 @@
                 this.saveToLocalStorage();
                 document.getElementById('saveButton').disabled = false;
             }
-			
-			// New method to handle merging cards
-            mergeCards(loadedCards) {
-                // Create a map of existing cards by content (using swedish as unique identifier)
-                const existingCardsMap = new Map(
-                    this.cards.map(card => [card.swedish, card])
-                );
-				
-				// Process loaded cards
-                this.cards = loadedCards.map(loadedCard => {
-                    const existingCard = existingCardsMap.get(loadedCard.swedish);
-                    
-                    if (existingCard) {
-                        // If card exists, preserve review metadata
-                        return {
-                            ...loadedCard,
-                            nextReview: existingCard.nextReview,
-                            interval: existingCard.interval,
-                            reviewCount: existingCard.reviewCount
-                        };
-                    } else {
-                        // If it's a new card, initialize review metadata
-                        return {
-                            ...loadedCard,
-                            nextReview: new Date().toISOString(),
-                            interval: 1,
-                            reviewCount: 0
-                        };
-                    }
-                });
-
-                this.saveToLocalStorage();
-            }
         }
-
 
         const system = new FlashcardSystem();
         let isShowingAnswer = false;
@@ -273,8 +239,15 @@
                 const contents = await file.text();
                 const loadedCards = JSON.parse(contents);
                 
-                // Use the new mergeCards method
-                system.mergeCards(loadedCards);
+                // Merge loaded cards with existing review metadata
+                system.cards = system.cards.map(existingCard => {
+                    const loadedCard = loadedCards.find(c => c.id === existingCard.id);
+                    return loadedCard ? { ...loadedCard, 
+                        nextReview: existingCard.nextReview,
+                        interval: existingCard.interval,
+                        reviewCount: existingCard.reviewCount
+                    } : existingCard;
+                });
                 
                 document.getElementById('saveButton').disabled = false;
                 updateUI();
