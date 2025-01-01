@@ -21,11 +21,14 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
-        /* Make the card container wider to accommodate GIFs better */
         .flashcard {
-            min-height: 300px;
-            max-width: 600px;
-            margin: 20px auto;
+            cursor: pointer;
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
         }
 
         .controls {
@@ -85,34 +88,6 @@
         .card-section {
             margin: 10px 0;
         }
-		
-		.gif-container {
-            width: 100%;
-            max-width: 480px;
-            margin: 10px auto;
-        }
-        
-        .gif-wrapper {
-            width: 100%;
-            height: 0;
-            padding-bottom: 100%;
-            position: relative;
-        }
-        
-        .gif-wrapper iframe {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            top: 0;
-            left: 0;
-        }
-        
-        .gif-attribution {
-            text-align: center;
-            font-size: 12px;
-            color: #666;
-            margin-top: 5px;
-        }
     </style>
 </head>
 <body>
@@ -150,33 +125,29 @@
         </div>
 
         <div class="card">
-        <h3>Add New Card</h3>
-        <div class="form-group">
-            <label for="swedish">Swedish:</label>
-            <input type="text" id="swedish" required>
+            <h3>Add New Card</h3>
+            <div class="form-group">
+                <label for="swedish">Swedish:</label>
+                <input type="text" id="swedish" required>
+            </div>
+            <div class="form-group">
+                <label for="english">English:</label>
+                <input type="text" id="english" required>
+            </div>
+            <div class="form-group">
+                <label for="visual">Visual Description:</label>
+                <input type="text" id="visual">
+            </div>
+            <div class="form-group">
+                <label for="sentence">Example Sentence:</label>
+                <textarea id="sentence"></textarea>
+            </div>
+            <div class="form-group">
+                <label for="translation">Sentence Translation:</label>
+                <textarea id="translation"></textarea>
+            </div>
+            <button onclick="addCard()">Add Card</button>
         </div>
-        <div class="form-group">
-            <label for="english">English:</label>
-            <input type="text" id="english" required>
-        </div>
-        <div class="form-group">
-            <label for="visual">Visual Description:</label>
-            <input type="text" id="visual" placeholder="Text description (optional)">
-        </div>
-        <div class="form-group">
-            <label for="gifEmbed">GIF Embed Code:</label>
-            <textarea id="gifEmbed" placeholder="Paste Giphy embed code here (optional)"></textarea>
-        </div>
-        <div class="form-group">
-            <label for="sentence">Example Sentence:</label>
-            <textarea id="sentence"></textarea>
-        </div>
-        <div class="form-group">
-            <label for="translation">Sentence Translation:</label>
-            <textarea id="translation"></textarea>
-        </div>
-        <button onclick="addCard()">Add Card</button>
-    </div>
     </div>
 
     <script>
@@ -380,20 +351,8 @@
             const card = system.currentCard;
             
             // Front of card
-            let visualContent = '';
-if (card.gifEmbed) {
-    visualContent += '<div class="gif-container">' +
-                    '<div class="gif-wrapper">' +
-                    card.gifEmbed +
-                    '</div>' +
-                    '</div>';
-}
-            if (card.visual) {
-                visualContent += '<div class="card-section">Visual: ' + card.visual + '</div>';
-            }
-            
             document.getElementById('swedishWord').textContent = `Swedish: ${card.swedish}`;
-            document.getElementById('visualDesc').innerHTML = visualContent;
+            document.getElementById('visualDesc').textContent = card.visual ? `Visual: ${card.visual}` : '';
             document.getElementById('swedishSentence').textContent = card.sentence ? `Sentence: ${card.sentence}` : '';
             
             // Back of card
@@ -405,7 +364,6 @@ if (card.gifEmbed) {
             hideAnswerButtons();
             isShowingAnswer = false;
         }
-
 
         function showAnswer() {
             document.getElementById('cardBack').style.display = "block";
@@ -433,7 +391,6 @@ if (card.gifEmbed) {
             const swedish = document.getElementById('swedish').value;
             const english = document.getElementById('english').value;
             const visual = document.getElementById('visual').value;
-            const gifEmbed = document.getElementById('gifEmbed').value;
             const sentence = document.getElementById('sentence').value;
             const translation = document.getElementById('translation').value;
 
@@ -446,7 +403,6 @@ if (card.gifEmbed) {
                 swedish,
                 english,
                 visual,
-                gifEmbed,
                 sentence,
                 translation
             });
@@ -455,7 +411,6 @@ if (card.gifEmbed) {
             document.getElementById('swedish').value = '';
             document.getElementById('english').value = '';
             document.getElementById('visual').value = '';
-            document.getElementById('gifEmbed').value = '';
             document.getElementById('sentence').value = '';
             document.getElementById('translation').value = '';
 
