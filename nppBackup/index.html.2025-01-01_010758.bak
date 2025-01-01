@@ -20,12 +20,6 @@
             margin: 20px 0;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
-		
-		#cardBack {
-            margin-top: 40px; /* Add significant space before translations */
-            padding-top: 20px; /* Additional padding at the top */
-            border-top: 1px solid #eee; /* Optional: adds a subtle separator */
-        }
 
         /* Make the card container wider to accommodate GIFs better */
         .flashcard {
@@ -89,8 +83,7 @@
         }
 
         .card-section {
-            margin: 15px 0; /* Increase spacing between sections */
-            padding: 5px 0;
+            margin: 10px 0;
         }
 		
 		.gif-container {
@@ -104,7 +97,6 @@
             height: 0;
             padding-bottom: 100%;
             position: relative;
-            margin-bottom: 30px; /* Add space after the GIF container */
         }
         
         .gif-wrapper iframe {
@@ -120,10 +112,6 @@
             font-size: 12px;
             color: #666;
             margin-top: 5px;
-        }
-		
-		gif-container p {
-            margin-bottom: 30px; /* Add space after the attribution */
         }
     </style>
 </head>
