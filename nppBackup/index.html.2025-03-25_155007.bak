@@ -322,32 +322,35 @@
         const system = new FlashcardSystem();
         let isShowingAnswer = false;
 
-function determineCardDisplay() {
-    let direction = document.getElementById('cardDirection').value;
-    const card = system.currentCard;
+        function determineCardDisplay() {
+            const direction = document.getElementById('cardDirection').value;
+            const card = system.currentCard;
 
-    // Randomize if needed
-    if (direction === 'random') {
-        direction = Math.random() < 0.5 ? 'swedish-english' : 'english-swedish';
-    }
+            // Update direction in the system
+            system.changeCardDirection(direction);
 
-    // Set display based on selected direction
-    if (direction === 'swedish-english') {
-        return {
-            frontWord: `Swedish: ${card.swedish}`,
-            frontSentence: card.sentence ? `Sentence: ${card.sentence}` : '',
-            backWord: `English: ${card.english}`,
-            backSentence: card.translation ? `Translation: ${card.translation}` : ''
-        };
-    } else {
-        return {
-            frontWord: `English: ${card.english}`,
-            frontSentence: card.translation ? `Sentence: ${card.translation}` : '',
-            backWord: `Swedish: ${card.swedish}`,
-            backSentence: card.sentence ? `Translation: ${card.sentence}` : ''
-        };
-    }
-}
+            // Randomize if needed
+            if (direction === 'random') {
+                direction = Math.random() < 0.5 ? 'swedish-english' : 'english-swedish';
+            }
+
+            // Set display based on selected direction
+            if (direction === 'swedish-english') {
+                return {
+                    frontWord: `Swedish: ${card.swedish}`,
+                    frontSentence: card.sentence ? `Sentence: ${card.sentence}` : '',
+                    backWord: `English: ${card.english}`,
+                    backSentence: card.translation ? `Translation: ${card.translation}` : ''
+                };
+            } else {
+                return {
+                    frontWord: `English: ${card.english}`,
+                    frontSentence: card.translation ? `Sentence: ${card.translation}` : '',
+                    backWord: `Swedish: ${card.swedish}`,
+                    backSentence: card.sentence ? `Translation: ${card.sentence}` : ''
+                };
+            }
+        }
 
         // Rest of the existing functions remain the same...
         async function openFile() {
