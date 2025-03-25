@@ -1,0 +1,50 @@
+[
+  {
+    "id": "1735723018432",
+    "swedish": "Nycklar",
+    "english": "Keys",
+    "visual": "🔑",
+    "gifEmbed": "",
+    "sentence": "Var är mina nycklar?",
+    "translation": "Where are my keys?",
+    "nextReview": "2025-01-01T09:16:58.432Z",
+    "interval": 1,
+    "reviewCount": 0
+  },
+  {
+    "id": "1735723050379",
+    "swedish": "någonsin",
+    "english": "ever",
+    "visual": "",
+    "gifEmbed": "<div style=\"width:100%;height:0;padding-bottom:100%;position:relative;\"><iframe src=\"https://giphy.com/embed/8BlFeHGnYpZTHXoS3b\" width=\"100%\" height=\"100%\" style=\"position:absolute\" frameBorder=\"0\" class=\"giphy-embed\" allowFullScreen></iframe></div><p><a href=\"https://giphy.com/gifs/garyvee-forever-ever-and-8BlFeHGnYpZTHXoS3b\">via GIPHY</a></p>",
+    "sentence": "Fotbollsspelaren Johanna Rytting Kaneryd är bättre än någonsin.",
+    "translation": "Football player Johanna Rytting Kaneryd is better than ever.",
+    "nextReview": "2025-01-01T09:17:30.379Z",
+    "interval": 1,
+    "reviewCount": 0
+  },
+  {
+    "id": "1735723437066",
+    "swedish": "brott, anmäld",
+    "english": "crime, reported",
+    "visual": "",
+    "gifEmbed": "<div style=\"width:100%;height:0;padding-bottom:83%;position:relative;\"><iframe src=\"https://giphy.com/embed/o2CbCvGN6qaUsHYu4F\" width=\"100%\" height=\"100%\" style=\"position:absolute\" frameBorder=\"0\" class=\"giphy-embed\" allowFullScreen></iframe></div><p><a href=\"https://giphy.com/gifs/theoffice-the-office-tv-drug-testing-o2CbCvGN6qaUsHYu4F\">via GIPHY</a></p>",
+    "sentence": "Den franska fotbollsspelaren Kylian Mbappé blev anmäld för sexbrott i Sverige.",
+    "translation": "The French football player Kylian Mbappé became accused/reported for a sex crime in Sweden.",
+    "nextReview": "2025-01-01T09:23:57.066Z",
+    "interval": 1,
+    "reviewCount": 0
+  },
+  {
+    "id": "1735723576432",
+    "swedish": "misstänkt",
+    "english": "suspicious",
+    "visual": "",
+    "gifEmbed": "<div style=\"width:100%;height:0;padding-bottom:133%;position:relative;\"><iframe src=\"https://giphy.com/embed/H5C8CevNMbpBqNqFjl\" width=\"100%\" height=\"100%\" style=\"position:absolute\" frameBorder=\"0\" class=\"giphy-embed\" allowFullScreen></iframe></div><p><a href=\"https://giphy.com/gifs/moodman-monkey-side-eye-sideeye-H5C8CevNMbpBqNqFjl\">via GIPHY</a></p>",
+    "sentence": "Kylian Mbappé är inte längre misstänkt för något brott.",
+    "translation": "Kylian Mbappé is no longer suspicious for any crime.",
+    "nextReview": "2025-01-01T09:26:16.432Z",
+    "interval": 1,
+    "reviewCount": 0
+  }
+]

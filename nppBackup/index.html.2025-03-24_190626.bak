@@ -22,11 +22,12 @@
         }
 		
 		#cardBack {
-            margin-top: 40px;
-            padding-top: 20px;
-            border-top: 1px solid #eee;
+            margin-top: 40px; /* Add significant space before translations */
+            padding-top: 20px; /* Additional padding at the top */
+            border-top: 1px solid #eee; /* Optional: adds a subtle separator */
         }
 
+        /* Make the card container wider to accommodate GIFs better */
         .flashcard {
             min-height: 300px;
             max-width: 600px;
@@ -88,7 +89,7 @@
         }
 
         .card-section {
-            margin: 15px 0;
+            margin: 15px 0; /* Increase spacing between sections */
             padding: 5px 0;
         }
 		
@@ -103,7 +104,7 @@
             height: 0;
             padding-bottom: 100%;
             position: relative;
-            margin-bottom: 30px;
+            margin-bottom: 30px; /* Add space after the GIF container */
         }
         
         .gif-wrapper iframe {
@@ -122,21 +123,7 @@
         }
 		
 		gif-container p {
-            margin-bottom: 30px;
-        }
-
-        .direction-controls {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            margin: 10px 0;
-            padding: 10px;
-            background-color: #f1f3f5;
-            border-radius: 8px;
-        }
-
-        .direction-controls label {
-            margin-right: 5px;
+            margin-bottom: 30px; /* Add space after the attribution */
         }
     </style>
 </head>
@@ -154,24 +141,15 @@
         </div>
         <div id="fileHandle">No file selected</div>
 
-        <div class="direction-controls">
-            <label>Card Direction:</label>
-            <select id="cardDirection" onchange="updateUI()">
-                <option value="swedish-english">Swedish → English</option>
-                <option value="english-swedish">English → Swedish</option>
-                <option value="random">Random Mix</option>
-            </select>
-        </div>
-
         <div id="flashcardContainer" class="card flashcard">
             <div id="cardFront">
-                <div class="card-section" id="frontWord"></div>
+                <div class="card-section" id="swedishWord"></div>
                 <div class="card-section" id="visualDesc"></div>
-                <div class="card-section" id="frontSentence"></div>
+                <div class="card-section" id="swedishSentence"></div>
             </div>
             <div id="cardBack" style="display: none;">
-                <div class="card-section" id="backWord"></div>
-                <div class="card-section" id="backSentence"></div>
+                <div class="card-section" id="englishWord"></div>
+                <div class="card-section" id="englishSentence"></div>
             </div>
         </div>
 
@@ -220,7 +198,6 @@
                 this.currentCard = null;
                 this.fileHandle = null;
                 this.hasUnsavedChanges = false;
-                this.currentDirection = 'swedish-english';
                 this.loadFromLocalStorage();
             }
 
@@ -229,15 +206,12 @@
                 if (savedState) {
                     const state = JSON.parse(savedState);
                     this.cards = state.cards || [];
-                    this.currentDirection = state.currentDirection || 'swedish-english';
-                    document.getElementById('cardDirection').value = this.currentDirection;
                 }
             }
 
             saveToLocalStorage() {
                 const state = {
-                    cards: this.cards,
-                    currentDirection: this.currentDirection
+                    cards: this.cards
                 };
                 localStorage.setItem('flashcardState', JSON.stringify(state));
             }
@@ -284,21 +258,20 @@
                 this.saveToLocalStorage();
                 document.getElementById('saveButton').disabled = false;
             }
-
-            changeCardDirection(direction) {
-                this.currentDirection = direction;
-                this.saveToLocalStorage();
-            }
-
+			
+			// New method to handle merging cards
             mergeCards(loadedCards) {
+                // Create a map of existing cards by content (using swedish as unique identifier)
                 const existingCardsMap = new Map(
                     this.cards.map(card => [card.swedish, card])
                 );
 				
+				// Process loaded cards
                 this.cards = loadedCards.map(loadedCard => {
                     const existingCard = existingCardsMap.get(loadedCard.swedish);
                     
                     if (existingCard) {
+                        // If card exists, preserve review metadata
                         return {
                             ...loadedCard,
                             nextReview: existingCard.nextReview,
@@ -306,6 +279,7 @@
                             reviewCount: existingCard.reviewCount
                         };
                     } else {
+                        // If it's a new card, initialize review metadata
                         return {
                             ...loadedCard,
                             nextReview: new Date().toISOString(),
@@ -319,40 +293,10 @@
             }
         }
 
+
         const system = new FlashcardSystem();
         let isShowingAnswer = false;
 
-        function determineCardDisplay() {
-            const direction = document.getElementById('cardDirection').value;
-            const card = system.currentCard;
-
-            // Update direction in the system
-            system.changeCardDirection(direction);
-
-            // Randomize if needed
-            if (direction === 'random') {
-                direction = Math.random() < 0.5 ? 'swedish-english' : 'english-swedish';
-            }
-
-            // Set display based on selected direction
-            if (direction === 'swedish-english') {
-                return {
-                    frontWord: `Swedish: ${card.swedish}`,
-                    frontSentence: card.sentence ? `Sentence: ${card.sentence}` : '',
-                    backWord: `English: ${card.english}`,
-                    backSentence: card.translation ? `Translation: ${card.translation}` : ''
-                };
-            } else {
-                return {
-                    frontWord: `English: ${card.english}`,
-                    frontSentence: card.translation ? `Sentence: ${card.translation}` : '',
-                    backWord: `Swedish: ${card.swedish}`,
-                    backSentence: card.sentence ? `Translation: ${card.sentence}` : ''
-                };
-            }
-        }
-
-        // Rest of the existing functions remain the same...
         async function openFile() {
             try {
                 const [fileHandle] = await window.showOpenFilePicker({
@@ -370,6 +314,7 @@
                 const contents = await file.text();
                 const loadedCards = JSON.parse(contents);
                 
+                // Use the new mergeCards method
                 system.mergeCards(loadedCards);
                 
                 document.getElementById('saveButton').disabled = false;
@@ -435,9 +380,9 @@
                 system.currentCard = dueCards[Math.floor(Math.random() * dueCards.length)];
                 showCard();
             } else {
-                document.getElementById('frontWord').textContent = "No cards due for review!";
+                document.getElementById('swedishWord').textContent = "No cards due for review!";
                 document.getElementById('visualDesc').textContent = "";
-                document.getElementById('frontSentence').textContent = "";
+                document.getElementById('swedishSentence').textContent = "";
                 document.getElementById('cardBack').style.display = "none";
                 hideAnswerButtons();
             }
@@ -445,34 +390,34 @@
 
         function showCard() {
             const card = system.currentCard;
-            const cardDisplay = determineCardDisplay();
             
             // Front of card
             let visualContent = '';
-            if (card.gifEmbed) {
-                visualContent += '<div class="gif-container">' +
-                                '<div class="gif-wrapper">' +
-                                card.gifEmbed +
-                                '</div>' +
-                                '</div>';
-            }
+if (card.gifEmbed) {
+    visualContent += '<div class="gif-container">' +
+                    '<div class="gif-wrapper">' +
+                    card.gifEmbed +
+                    '</div>' +
+                    '</div>';
+}
             if (card.visual) {
                 visualContent += '<div class="card-section">Visual: ' + card.visual + '</div>';
             }
             
-            document.getElementById('frontWord').textContent = cardDisplay.frontWord;
+            document.getElementById('swedishWord').textContent = `Swedish: ${card.swedish}`;
             document.getElementById('visualDesc').innerHTML = visualContent;
-            document.getElementById('frontSentence').textContent = cardDisplay.frontSentence;
+            document.getElementById('swedishSentence').textContent = card.sentence ? `Sentence: ${card.sentence}` : '';
             
             // Back of card
-            document.getElementById('backWord').textContent = cardDisplay.backWord;
-            document.getElementById('backSentence').textContent = cardDisplay.backSentence;
+            document.getElementById('englishWord').textContent = `English: ${card.english}`;
+            document.getElementById('englishSentence').textContent = card.translation ? `Translation: ${card.translation}` : '';
             
             document.getElementById('cardBack').style.display = "none";
             document.querySelector('button[onclick="showAnswer()"]').style.display = "block";
             hideAnswerButtons();
             isShowingAnswer = false;
         }
+
 
         function showAnswer() {
             document.getElementById('cardBack').style.display = "block";

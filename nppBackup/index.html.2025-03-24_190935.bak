@@ -3,14 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Swedish Flashcards</title>
+    <title>SvenskaLearn</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <style>
         body {
             font-family: Arial, sans-serif;
             max-width: 800px;
             margin: 0 auto;
             padding: 20px;
-            background-color: #f5f5f5;
+            background-color: #f4f7f6;
         }
 
         .card {
@@ -22,11 +23,16 @@
         }
 		
 		#cardBack {
-            margin-top: 40px;
-            padding-top: 20px;
-            border-top: 1px solid #eee;
+            margin-top: 40px; /* Add significant space before translations */
+            padding-top: 20px; /* Additional padding at the top */
+            border-top: 1px solid #eee; /* Optional: adds a subtle separator */
+        }
+		
+		.card-shadow {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
         }
 
+        /* Make the card container wider to accommodate GIFs better */
         .flashcard {
             min-height: 300px;
             max-width: 600px;
@@ -88,7 +94,7 @@
         }
 
         .card-section {
-            margin: 15px 0;
+            margin: 15px 0; /* Increase spacing between sections */
             padding: 5px 0;
         }
 		
@@ -103,7 +109,7 @@
             height: 0;
             padding-bottom: 100%;
             position: relative;
-            margin-bottom: 30px;
+            margin-bottom: 30px; /* Add space after the GIF container */
         }
         
         .gif-wrapper iframe {
@@ -122,95 +128,109 @@
         }
 		
 		gif-container p {
-            margin-bottom: 30px;
-        }
-
-        .direction-controls {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            margin: 10px 0;
-            padding: 10px;
-            background-color: #f1f3f5;
-            border-radius: 8px;
-        }
-
-        .direction-controls label {
-            margin-right: 5px;
+            margin-bottom: 30px; /* Add space after the attribution */
         }
     </style>
 </head>
 <body>
     <div id="app">
         <div class="stats">
-            <h2>Swedish Flashcards</h2>
-            <p>Cards due for review: <span id="dueCount">0</span></p>
-        </div>
-
-        <div class="file-controls">
-            <button onclick="openFile()">Open Flashcards File</button>
-            <button onclick="createNewFile()">Create New Flashcards File</button>
-            <button onclick="saveFile()" id="saveButton" disabled>Save Changes</button>
-        </div>
-        <div id="fileHandle">No file selected</div>
-
-        <div class="direction-controls">
-            <label>Card Direction:</label>
-            <select id="cardDirection" onchange="updateUI()">
-                <option value="swedish-english">Swedish → English</option>
-                <option value="english-swedish">English → Swedish</option>
-                <option value="random">Random Mix</option>
-            </select>
-        </div>
-
-        <div id="flashcardContainer" class="card flashcard">
-            <div id="cardFront">
-                <div class="card-section" id="frontWord"></div>
-                <div class="card-section" id="visualDesc"></div>
-                <div class="card-section" id="frontSentence"></div>
+            <body class="bg-gray-100 min-h-screen flex flex-col items-center">
+    <div class="container mx-auto px-4 py-8 max-w-2xl">
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+            <h1 class="text-3xl font-bold text-center text-blue-600 mb-4">Swedish Flashcards</h1>
+            
+            <div class="flex justify-between items-center mb-4">
+                <div class="text-gray-600">
+                    Cards due: <span id="dueCount" class="font-bold">0</span>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <label for="cardDirection" class="text-sm text-gray-700">Card Direction:</label>
+                    <select id="cardDirection" class="form-select border rounded px-2 py-1">
+                        <option value="swedish-english">Swedish → English</option>
+                        <option value="english-swedish">English → Swedish</option>
+                        <option value="random">Random</option>
+                    </select>
+                </div>
             </div>
-            <div id="cardBack" style="display: none;">
-                <div class="card-section" id="backWord"></div>
-                <div class="card-section" id="backSentence"></div>
+
+        <div class="file-controls flex justify-center space-x-4 mb-4">
+                <button onclick="openFile()" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded transition">
+                    Open Flashcards
+                </button>
+                <button onclick="createNewFile()" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded transition">
+                    New Flashcards
+                </button>
+                <button onclick="saveFile()" id="saveButton" disabled class="bg-gray-500 text-white px-4 py-2 rounded opacity-50 cursor-not-allowed">
+                    Save Changes
+                </button>
+            </div>
+
+            <div id="fileHandle" class="text-center text-gray-500 italic mb-4">
+                No file selected
+            </div>
+
+        <div id="flashcardContainer" class="bg-white border rounded-lg p-6 mb-4 min-h-[300px] flex flex-col justify-center items-center card-shadow">
+                <div id="cardFront" class="text-center">
+                    <div id="mainWord" class="text-2xl font-semibold text-blue-700 mb-4"></div>
+                    <div id="visualDesc" class="text-gray-600 mb-4"></div>
+                    <div id="exampleSentence" class="italic text-gray-500"></div>
+                </div>
+                <div id="cardBack" class="text-center" style="display: none;">
+                    <div id="translatedWord" class="text-2xl font-semibold text-green-700 mb-4"></div>
+                    <div id="translatedSentence" class="italic text-gray-500"></div>
+                </div>
+            </div>
+
+        <div class="controls flex justify-center space-x-4 mb-4">
+                <button onclick="showAnswer()" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded transition">
+                    Show Answer
+                </button>
+                <div id="ratingButtons" style="display: none;">
+                    <button onclick="rateCard(1)" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded mr-2">Again</button>
+                    <button onclick="rateCard(2)" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded mr-2">Hard</button>
+                    <button onclick="rateCard(3)" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded mr-2">Good</button>
+                    <button onclick="rateCard(4)" class="bg-blue-500 hover:bg-blue-700 text-white px-4 py-2 rounded">Easy</button>
+                </div>
             </div>
         </div>
 
-        <div class="controls">
-            <button onclick="showAnswer()">Show Answer</button>
-            <button onclick="rateCard(1)" style="display: none;">Again</button>
-            <button onclick="rateCard(2)" style="display: none;">Hard</button>
-            <button onclick="rateCard(3)" style="display: none;">Good</button>
-            <button onclick="rateCard(4)" style="display: none;">Easy</button>
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <h3 class="text-xl font-semibold mb-4 text-blue-600">Add New Card</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-gray-700 mb-2" for="swedish">Swedish:</label>
+                    <input type="text" id="swedish" class="w-full border rounded px-3 py-2" required>
+                </div>
+                <div>
+                    <label class="block text-gray-700 mb-2" for="english">English:</label>
+                    <input type="text" id="english" class="w-full border rounded px-3 py-2" required>
+                </div>
+            </div>
+            <div class="mt-4">
+                <label class="block text-gray-700 mb-2" for="visual">Visual Description:</label>
+                <input type="text" id="visual" class="w-full border rounded px-3 py-2" placeholder="Optional description">
+            </div>
+            <div class="mt-4">
+                <label class="block text-gray-700 mb-2" for="gifEmbed">GIF Embed Code:</label>
+                <textarea id="gifEmbed" class="w-full border rounded px-3 py-2" placeholder="Optional Giphy embed code"></textarea>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                <div>
+                    <label class="block text-gray-700 mb-2" for="sentence">Example Sentence:</label>
+                    <textarea id="sentence" class="w-full border rounded px-3 py-2"></textarea>
+                </div>
+                <div>
+                    <label class="block text-gray-700 mb-2" for="translation">Sentence Translation:</label>
+                    <textarea id="translation" class="w-full border rounded px-3 py-2"></textarea>
+                </div>
+            </div>
+            <div class="mt-4 text-center">
+                <button onclick="addCard()" class="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded transition">
+                    Add Card
+                </button>
+            </div>
         </div>
-
-        <div class="card">
-        <h3>Add New Card</h3>
-        <div class="form-group">
-            <label for="swedish">Swedish:</label>
-            <input type="text" id="swedish" required>
-        </div>
-        <div class="form-group">
-            <label for="english">English:</label>
-            <input type="text" id="english" required>
-        </div>
-        <div class="form-group">
-            <label for="visual">Visual Description:</label>
-            <input type="text" id="visual" placeholder="Text description (optional)">
-        </div>
-        <div class="form-group">
-            <label for="gifEmbed">GIF Embed Code:</label>
-            <textarea id="gifEmbed" placeholder="Paste Giphy embed code here (optional)"></textarea>
-        </div>
-        <div class="form-group">
-            <label for="sentence">Example Sentence:</label>
-            <textarea id="sentence"></textarea>
-        </div>
-        <div class="form-group">
-            <label for="translation">Sentence Translation:</label>
-            <textarea id="translation"></textarea>
-        </div>
-        <button onclick="addCard()">Add Card</button>
-    </div>
     </div>
 
     <script>
@@ -220,7 +240,6 @@
                 this.currentCard = null;
                 this.fileHandle = null;
                 this.hasUnsavedChanges = false;
-                this.currentDirection = 'swedish-english';
                 this.loadFromLocalStorage();
             }
 
@@ -229,15 +248,12 @@
                 if (savedState) {
                     const state = JSON.parse(savedState);
                     this.cards = state.cards || [];
-                    this.currentDirection = state.currentDirection || 'swedish-english';
-                    document.getElementById('cardDirection').value = this.currentDirection;
                 }
             }
 
             saveToLocalStorage() {
                 const state = {
-                    cards: this.cards,
-                    currentDirection: this.currentDirection
+                    cards: this.cards
                 };
                 localStorage.setItem('flashcardState', JSON.stringify(state));
             }
@@ -284,21 +300,20 @@
                 this.saveToLocalStorage();
                 document.getElementById('saveButton').disabled = false;
             }
-
-            changeCardDirection(direction) {
-                this.currentDirection = direction;
-                this.saveToLocalStorage();
-            }
-
+			
+			// New method to handle merging cards
             mergeCards(loadedCards) {
+                // Create a map of existing cards by content (using swedish as unique identifier)
                 const existingCardsMap = new Map(
                     this.cards.map(card => [card.swedish, card])
                 );
 				
+				// Process loaded cards
                 this.cards = loadedCards.map(loadedCard => {
                     const existingCard = existingCardsMap.get(loadedCard.swedish);
                     
                     if (existingCard) {
+                        // If card exists, preserve review metadata
                         return {
                             ...loadedCard,
                             nextReview: existingCard.nextReview,
@@ -306,6 +321,7 @@
                             reviewCount: existingCard.reviewCount
                         };
                     } else {
+                        // If it's a new card, initialize review metadata
                         return {
                             ...loadedCard,
                             nextReview: new Date().toISOString(),
@@ -319,40 +335,16 @@
             }
         }
 
+
         const system = new FlashcardSystem();
         let isShowingAnswer = false;
+        let cardDirection = 'swedish-english';
 
-        function determineCardDisplay() {
-            const direction = document.getElementById('cardDirection').value;
-            const card = system.currentCard;
+        document.getElementById('cardDirection').addEventListener('change', (e) => {
+            cardDirection = e.target.value;
+            updateUI();
+        });
 
-            // Update direction in the system
-            system.changeCardDirection(direction);
-
-            // Randomize if needed
-            if (direction === 'random') {
-                direction = Math.random() < 0.5 ? 'swedish-english' : 'english-swedish';
-            }
-
-            // Set display based on selected direction
-            if (direction === 'swedish-english') {
-                return {
-                    frontWord: `Swedish: ${card.swedish}`,
-                    frontSentence: card.sentence ? `Sentence: ${card.sentence}` : '',
-                    backWord: `English: ${card.english}`,
-                    backSentence: card.translation ? `Translation: ${card.translation}` : ''
-                };
-            } else {
-                return {
-                    frontWord: `English: ${card.english}`,
-                    frontSentence: card.translation ? `Sentence: ${card.translation}` : '',
-                    backWord: `Swedish: ${card.swedish}`,
-                    backSentence: card.sentence ? `Translation: ${card.sentence}` : ''
-                };
-            }
-        }
-
-        // Rest of the existing functions remain the same...
         async function openFile() {
             try {
                 const [fileHandle] = await window.showOpenFilePicker({
@@ -370,6 +362,7 @@
                 const contents = await file.text();
                 const loadedCards = JSON.parse(contents);
                 
+                // Use the new mergeCards method
                 system.mergeCards(loadedCards);
                 
                 document.getElementById('saveButton').disabled = false;
@@ -435,44 +428,69 @@
                 system.currentCard = dueCards[Math.floor(Math.random() * dueCards.length)];
                 showCard();
             } else {
-                document.getElementById('frontWord').textContent = "No cards due for review!";
+                document.getElementById('swedishWord').textContent = "No cards due for review!";
                 document.getElementById('visualDesc').textContent = "";
-                document.getElementById('frontSentence').textContent = "";
+                document.getElementById('swedishSentence').textContent = "";
                 document.getElementById('cardBack').style.display = "none";
                 hideAnswerButtons();
+            }
+        }
+		
+		function determineCardDisplay(card) {
+            switch(cardDirection) {
+                case 'swedish-english':
+                    return {
+                        mainWord: card.swedish,
+                        translatedWord: card.english,
+                        mainSentence: card.sentence,
+                        translatedSentence: card.translation
+                    };
+                case 'english-swedish':
+                    return {
+                        mainWord: card.english,
+                        translatedWord: card.swedish,
+                        mainSentence: card.translation,
+                        translatedSentence: card.sentence
+                    };
+                case 'random':
+                    return Math.random() > 0.5 
+                        ? determineCardDisplay(card, 'swedish-english')
+                        : determineCardDisplay(card, 'english-swedish');
+                default:
+                    return determineCardDisplay(card, 'swedish-english');
             }
         }
 
         function showCard() {
             const card = system.currentCard;
-            const cardDisplay = determineCardDisplay();
+            const display = determineCardDisplay(card);
             
-            // Front of card
             let visualContent = '';
-            if (card.gifEmbed) {
-                visualContent += '<div class="gif-container">' +
-                                '<div class="gif-wrapper">' +
-                                card.gifEmbed +
-                                '</div>' +
-                                '</div>';
-            }
-            if (card.visual) {
-                visualContent += '<div class="card-section">Visual: ' + card.visual + '</div>';
-            }
+if (card.gifEmbed) {
+    visualContent += 
+        '<div class="gif-container w-full max-w-md mx-auto mb-4">' +
+        '    <div class="gif-wrapper relative w-full" style="padding-bottom: 100%;">' +
+        card.gifEmbed +
+        '    </div>' +
+        '</div>';
+}
+if (card.visual) {
+    visualContent += '<div class="text-gray-600 text-sm">' + card.visual + '</div>';
+}
             
-            document.getElementById('frontWord').textContent = cardDisplay.frontWord;
+            document.getElementById('mainWord').textContent = display.mainWord;
             document.getElementById('visualDesc').innerHTML = visualContent;
-            document.getElementById('frontSentence').textContent = cardDisplay.frontSentence;
+            document.getElementById('exampleSentence').textContent = display.mainSentence || '';
             
-            // Back of card
-            document.getElementById('backWord').textContent = cardDisplay.backWord;
-            document.getElementById('backSentence').textContent = cardDisplay.backSentence;
+            document.getElementById('translatedWord').textContent = display.translatedWord;
+            document.getElementById('translatedSentence').textContent = display.translatedSentence || '';
             
             document.getElementById('cardBack').style.display = "none";
             document.querySelector('button[onclick="showAnswer()"]').style.display = "block";
-            hideAnswerButtons();
+            document.getElementById('ratingButtons').style.display = "none";
             isShowingAnswer = false;
         }
+
 
         function showAnswer() {
             document.getElementById('cardBack').style.display = "block";
