@@ -124,6 +124,20 @@
 		gif-container p {
             margin-bottom: 30px;
         }
+
+        .direction-controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 10px 0;
+            padding: 10px;
+            background-color: #f1f3f5;
+            border-radius: 8px;
+        }
+
+        .direction-controls label {
+            margin-right: 5px;
+        }
     </style>
 </head>
 <body>
@@ -131,7 +145,6 @@
         <div class="stats">
             <h2>Swedish Flashcards</h2>
             <p>Cards due for review: <span id="dueCount">0</span></p>
-            <p>Mode: Random Mix (Swedish ↔ English)</p>
         </div>
 
         <div class="file-controls">
@@ -140,6 +153,15 @@
             <button onclick="saveFile()" id="saveButton" disabled>Save Changes</button>
         </div>
         <div id="fileHandle">No file selected</div>
+
+        <div class="direction-controls">
+            <label>Card Direction:</label>
+            <select id="cardDirection" onchange="updateUI()">
+                <option value="swedish-english">Swedish → English</option>
+                <option value="english-swedish">English → Swedish</option>
+                <option value="random">Random Mix</option>
+            </select>
+        </div>
 
         <div id="flashcardContainer" class="card flashcard">
             <div id="cardFront">
@@ -155,10 +177,10 @@
 
         <div class="controls">
             <button onclick="showAnswer()">Show Answer</button>
-            <button onclick="rateCard(1)" class="rating-button" style="display: none;">Again</button>
-            <button onclick="rateCard(2)" class="rating-button" style="display: none;">Hard</button>
-            <button onclick="rateCard(3)" class="rating-button" style="display: none;">Good</button>
-            <button onclick="rateCard(4)" class="rating-button" style="display: none;">Easy</button>
+            <button onclick="rateCard(1)" style="display: none;">Again</button>
+            <button onclick="rateCard(2)" style="display: none;">Hard</button>
+            <button onclick="rateCard(3)" style="display: none;">Good</button>
+            <button onclick="rateCard(4)" style="display: none;">Easy</button>
         </div>
 
         <div class="card">
@@ -198,7 +220,7 @@
                 this.currentCard = null;
                 this.fileHandle = null;
                 this.hasUnsavedChanges = false;
-                this.currentCardDirection = null; // Tracks which direction the current card is shown in
+                this.currentDirection = 'swedish-english';
                 this.loadFromLocalStorage();
             }
 
@@ -207,12 +229,15 @@
                 if (savedState) {
                     const state = JSON.parse(savedState);
                     this.cards = state.cards || [];
+                    this.currentDirection = state.currentDirection || 'swedish-english';
+                    document.getElementById('cardDirection').value = this.currentDirection;
                 }
             }
 
             saveToLocalStorage() {
                 const state = {
-                    cards: this.cards
+                    cards: this.cards,
+                    currentDirection: this.currentDirection
                 };
                 localStorage.setItem('flashcardState', JSON.stringify(state));
             }
@@ -260,6 +285,11 @@
                 document.getElementById('saveButton').disabled = false;
             }
 
+            changeCardDirection(direction) {
+                this.currentDirection = direction;
+                this.saveToLocalStorage();
+            }
+
             mergeCards(loadedCards) {
                 const existingCardsMap = new Map(
                     this.cards.map(card => [card.swedish, card])
@@ -287,44 +317,39 @@
 
                 this.saveToLocalStorage();
             }
-
-            selectNextCard() {
-                const dueCards = this.getDueCards();
-                if (dueCards.length > 0) {
-                    this.currentCard = dueCards[Math.floor(Math.random() * dueCards.length)];
-                    // Randomly determine direction for this card
-                    this.currentCardDirection = Math.random() < 0.5 ? 'swedish-english' : 'english-swedish';
-                    return true;
-                }
-                return false;
-            }
         }
 
         const system = new FlashcardSystem();
         let isShowingAnswer = false;
 
-        function determineCardDisplay() {
-            const card = system.currentCard;
-            const direction = system.currentCardDirection;
+function determineCardDisplay() {
+    let direction = document.getElementById('cardDirection').value;
+    const card = system.currentCard;
 
-            // Set display based on selected direction
-            if (direction === 'swedish-english') {
-                return {
-                    frontWord: `Swedish: ${card.swedish}`,
-                    frontSentence: card.sentence ? `Sentence: ${card.sentence}` : '',
-                    backWord: `English: ${card.english}`,
-                    backSentence: card.translation ? `Translation: ${card.translation}` : ''
-                };
-            } else {
-                return {
-                    frontWord: `English: ${card.english}`,
-                    frontSentence: card.translation ? `Sentence: ${card.translation}` : '',
-                    backWord: `Swedish: ${card.swedish}`,
-                    backSentence: card.sentence ? `Translation: ${card.sentence}` : ''
-                };
-            }
-        }
+    // Randomize if needed
+    if (direction === 'random') {
+        direction = Math.random() < 0.5 ? 'swedish-english' : 'english-swedish';
+    }
 
+    // Set display based on selected direction
+    if (direction === 'swedish-english') {
+        return {
+            frontWord: `Swedish: ${card.swedish}`,
+            frontSentence: card.sentence ? `Sentence: ${card.sentence}` : '',
+            backWord: `English: ${card.english}`,
+            backSentence: card.translation ? `Translation: ${card.translation}` : ''
+        };
+    } else {
+        return {
+            frontWord: `English: ${card.english}`,
+            frontSentence: card.translation ? `Sentence: ${card.translation}` : '',
+            backWord: `Swedish: ${card.swedish}`,
+            backSentence: card.sentence ? `Translation: ${card.sentence}` : ''
+        };
+    }
+}
+
+        // Rest of the existing functions remain the same...
         async function openFile() {
             try {
                 const [fileHandle] = await window.showOpenFilePicker({
@@ -400,10 +425,11 @@
         }
 
         function updateUI() {
-            document.getElementById('dueCount').textContent = system.getDueCards().length;
+            const dueCards = system.getDueCards();
+            document.getElementById('dueCount').textContent = dueCards.length;
 
-            // Select next card
-            if (system.selectNextCard()) {
+            if (dueCards.length > 0) {
+                system.currentCard = dueCards[Math.floor(Math.random() * dueCards.length)];
                 showCard();
             } else {
                 document.getElementById('frontWord').textContent = "No cards due for review!";
@@ -453,12 +479,12 @@
         }
 
         function hideAnswerButtons() {
-            const buttons = document.querySelectorAll('.rating-button');
+            const buttons = document.querySelectorAll('button[onclick^="rateCard"]');
             buttons.forEach(button => button.style.display = "none");
         }
 
         function showAnswerButtons() {
-            const buttons = document.querySelectorAll('.rating-button');
+            const buttons = document.querySelectorAll('button[onclick^="rateCard"]');
             buttons.forEach(button => button.style.display = "block");
         }
 
